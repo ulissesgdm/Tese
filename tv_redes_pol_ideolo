@@ -1,0 +1,1910 @@
+install.packages("stargazer")
+install.packages("haven")
+install.packages("ggthemes")
+install.packages("lmtest")
+install.packages("margins")
+install.packages("tidyverse")
+install.packages("InformationValue")
+install.packages("sjPlot")
+install.packages("margins")
+
+
+library(tidyverse)
+library(readr)
+library(sjPlot)
+library(haven)
+library(lmtest)
+library(sandwich)
+library(car)
+library(stargazer)
+library(ggthemes)
+library(InformationValue)
+library(margins)
+library(dotwhisker)
+
+
+# Tratamento dos dados do ESEB de 2022
+
+ESEB2022 <- read_sav("https://github.com/ulissesgdm/Analise-de-dados/raw/master/Eseb_2022%20(2).sav")
+
+
+########################################################################################
+
+
+#Regressões e gráficos sobre o consumo de mídias e a renda
+
+#Maioridade e TV
+
+###################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_1 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_maioridade <- lm(Q31_1 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_maioridade)
+
+
+plot_model(reg_maioridade,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Redução da Maioridade", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+#Casamento Homoafetivo e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_2 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_casamento <- lm(Q31_2 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_casamento)
+
+plot_model(reg_casamento,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Casamento Homoafetivo", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+#Adoção e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_3 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_adocao <- lm(Q31_3 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_adocao)
+
+
+plot_model(reg_adocao,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Adoção por Casal Homoafetivo", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+# Pena de morte e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_4 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_morte <- lm(Q31_4 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_morte)
+
+
+plot_model(reg_morte,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Pena de Morte", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Drogas e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_5 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_droga <- lm(Q31_5 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_droga)
+
+
+plot_model(reg_droga,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Leg. das Drogas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Armas e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_6 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_armas <- lm(Q31_6 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_armas)
+
+plot_model(reg_armas,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Leg. Armas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Aborto e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_7 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_aborto <- lm(Q31_7 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_aborto)
+
+
+plot_model(reg_aborto,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Leg. Aborto", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Prisão de Mulheres e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_8 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_mulher <- lm(Q31_8 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_mulher)
+
+
+plot_model(reg_mulher,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Punição Aborto", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Cotas Raciais e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_9 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_cotas <- lm(Q31_9 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_cotas)
+
+
+plot_model(reg_cotas,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Cotas Raciais", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Ensino Religioso e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_10 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_religiao <- lm(Q31_10 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_religiao)
+
+
+plot_model(reg_religiao,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Ensino Religioso", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Privatização e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_11 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_privatiza <- lm(Q31_11 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_privatiza)
+
+plot_model(reg_privatiza,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Privatização", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+
+# Bolsa Família e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_12 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_bolsa <- lm(Q31_12 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_bolsa)
+
+
+plot_model(reg_bolsa,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Bolsa Família", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Auxílio Brasil e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_13 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_aux <- lm(Q31_13 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_aux)
+
+
+plot_model(reg_aux,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Auxílio Brasil", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+# Militarização e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_14 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_milico <- lm(Q31_14 ~ Q02b*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_milico)
+
+
+plot_model(reg_milico,  type = "pred",
+           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Militarização das Escolas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+#############################################################################################################
+#############################################################################################################
+#############################################################################################################
+
+#Rede social
+
+#Maioridade e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_1 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_maioridade1 <- lm(Q31_1 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_maioridade1)
+
+
+plot_model(reg_maioridade1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Red. da Maioridade", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+#Casamento e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_2 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_casamento1 <- lm(Q31_2 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_casamento1)
+
+
+plot_model(reg_casamento1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Cas. Homo.", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+#Adoção por casais homoafetivos e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_3 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_adocao1 <- lm(Q31_3 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_adocao1)
+
+
+plot_model(reg_adocao1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Ado. Homo.", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+# Pena de morte e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_4 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_morte1 <- lm(Q31_4 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_morte1)
+
+plot_model(reg_morte1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Pena de Morte", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Drogas e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_5 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_droga1 <- lm(Q31_5 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_droga1)
+
+
+plot_model(reg_droga1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Leg. Drogas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Armas e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_6 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_armas1 <- lm(Q31_6 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_armas1)
+
+
+plot_model(reg_armas1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Leg. Armas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Aborto e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_7 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_aborto1 <- lm(Q31_7 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_aborto1)
+
+
+plot_model(reg_aborto1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Leg. Aborto", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Prisão de Mulheres e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_8 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_mulher1 <- lm(Q31_8 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_mulher1)
+
+
+plot_model(reg_mulher1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Punição Aborto", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Cotas Raciais e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_9 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_cotas1 <- lm(Q31_9 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_cotas1)
+
+
+plot_model(reg_cotas1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Cotas Raciais", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Ensino Religioso e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_10 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_religiao1 <- lm(Q31_10 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_religiao1)
+
+
+plot_model(reg_religiao1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Ensino Religioso", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Privatização e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_11 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_privatiza1 <- lm(Q31_11 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_privatiza1)
+
+
+plot_model(reg_privatiza1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Privatização", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Bolsa Família e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_12 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_bolsa1 <- lm(Q31_12 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_bolsa1)
+
+
+plot_model(reg_bolsa1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Bolsa Família", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Auxílio Brasil e Rede Social
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_13 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_aux1 <- lm(Q31_13 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_aux1)
+
+plot_model(reg_aux1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de Rede Social, Voto e Auxílio Brasil", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - Rede Social")
+
+
+
+# Militarização e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_14 <3,
+                          D09_RENDAF < 200000, D03 < 11) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
+    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
+    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
+    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_milico1 <- lm(Q31_14 ~ Q02f*Q10P2b + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
+
+summary(reg_milico1)
+
+plot_model(reg_milico1,  type = "pred",
+           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Consumo de TV, Voto e Militarização das Escolas", x= "Voto 2º turno", y = "Concordo x Discordo") + ggplot2::labs(colour = "Dias de consumo - TV")
+
+
+
+
+
+
+
+## Tabela completa (pacote gtsummary)
+
+tab_model(log2022, 
+          show.reflvl = T, 
+          show.intercept = F, 
+          p.style = "numeric_stars")
+
+## Tabela completa (pacote gtsummary)
+gtsummary::tbl_regression(log2022, exponentiate = FALSE)
+gtsummary::tbl_regression(log2022, exponentiate = TRUE)
+
+
+
+summary(Eseb1$D12A)
+
+
+#Testes futuros de cada regressão
+
+
+plot(regressaotd20221,1)
+plot(regressaotd20221,3)
+plot(regressaotd20221,4)
+plot(regressaotd20221,5)
+outlierTest(regressaotd20221)
+vif(regressaotd20221)
+coeftest(regressaotd20221, vcov. = vcovHC(regressaotd20221))
