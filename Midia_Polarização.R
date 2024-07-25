@@ -39,7 +39,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q17_5 <20, Q17_2 <20,
-                          D09_RENDAF < 200000, D03 < 11) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -96,17 +96,33 @@ Eseb1$polarizacao <- abs(Eseb1$apoio)
 ggplot(Eseb1, aes(Q02g)) + geom_bar()
 
 
+# apoio político tv
+
 reg_apoio_tv <- lm(apoio ~ Q02b + Q01 + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
 
 summary(reg_apoio_tv)
 
-plot_model(reg_apoio_tv)
+ggplot(Eseb1, aes(x = Q02b, y = apoio))+
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Consumo de TV e Apoio Político",
+       x = "Consumo semanal de TV",
+       y = "Apoio") +
+  theme_minimal()
+
+
+#apoio político rede social
 
 reg_apoio_rs <- lm(apoio ~ Q02f + Q01 + D09_RENDAF + D01A_IDADE + D02 + REG + D03 + religiao + raca, data = Eseb1)
 
 summary(reg_apoio_rs)
 
-plot_model(reg_apoio_rs)
+# Cria o gráfico com a linha de regressão
+ggplot(Eseb1, aes(x = Q02f, y = apoio))+
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Consumo de Redes Sociais e Apoio Político",
+       x = "Consumo semanal de redes sociais",
+       y = "Apoio") +
+  theme_minimal()
 
 
 #Polarização Afetiva e Consumo de TV por voto
@@ -115,8 +131,12 @@ reg_pol_tv <- lm(polarizacao ~ Q02b*Q10P2b + Q01+ D09_RENDAF + D01A_IDADE + D02 
 
 summary(reg_pol_tv)
 
-plot_model(reg_pol_tv,  type = "pred",
-           terms = c("Q10P2b","Q02b"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="TV e Polarização", x= "Voto 2º turno", y = "Polarização Afetiva") + ggplot2::labs(colour = "Dias de consumo - TV")
+ggplot(Eseb1, aes(x = Q02b, y = polarizacao, color = Q10P2b)) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Polarização e consumo de TV",
+       x = "Consumo semanal de TV",
+       y = "Polarização") +
+  theme_minimal()
 
 
 # Polarização Afetiva e Consumo de Rede Social por voto
@@ -125,8 +145,12 @@ reg_pol_rs <- lm(polarizacao ~ Q02f*Q10P2b + Q01+  D09_RENDAF + D01A_IDADE + D02
 
 summary(reg_pol_rs)
 
-plot_model(reg_pol_rs,  type = "pred",
-           terms = c("Q10P2b","Q02f"), ci.lvl = 0.9)+ theme(axis.text.x = element_text(angle = 45, hjust = 1)) +labs(title ="Redes Sociais e Polarização", x= "Voto 2º turno", y = "Polarização Afetiva") + ggplot2::labs(colour = "Dias de consumo - TV")
+ggplot(Eseb1, aes(x = Q02f, y = polarizacao, color = Q10P2b)) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Polarização e consumo de Redes Sociais",
+       x = "Consumo semanal de Redes Sociais",
+       y = "Polarização") +
+  theme_minimal()
 
 
 #Polarização afetiva e uso diário de redes sociais
@@ -138,12 +162,5 @@ summary(reg_pol_dia)
 
 plot_model(reg_pol_dia, type = "pred",
            terms = c("Q02g"), ci.lvl = 0.9) + labs(title = "Polarização e uso diário de Redes Sociais", x = "Uso diário de Redes Sociais", y = 'Polarização') + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
-
-
-
-
 
 
