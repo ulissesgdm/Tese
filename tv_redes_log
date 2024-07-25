@@ -45,7 +45,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90,  D03 < 90, Q31_1 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_1 = as_factor(Q31_1),
@@ -58,14 +58,15 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90,  D03 < 90, Q31_1 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
-
 
 #Variável religião
 
@@ -120,7 +121,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_2 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -129,16 +130,19 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_2 <3,
          D02 = as_factor(D02),
          Q01 = as_factor(Q01))
 
+
 #Variável Voto
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -197,7 +201,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_3 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -210,12 +214,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_3 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -275,7 +281,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_4 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -288,12 +294,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_4 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -354,7 +362,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_5 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -363,16 +371,19 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_5 <3,
          D02 = as_factor(D02),
          Q01 = as_factor(Q01))
 
+
 #Variável Voto
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -434,7 +445,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_6 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -447,12 +458,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_6 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -513,7 +526,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_7 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -526,12 +539,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_7 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -594,7 +609,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_8 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -607,12 +622,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_8 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -674,7 +691,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_9 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -687,12 +704,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_9 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -751,7 +770,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_10 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -764,12 +783,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_10 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -830,7 +851,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_11 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -843,12 +864,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_11 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -910,7 +933,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_12 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -923,12 +946,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_12 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -986,7 +1011,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_13 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -999,12 +1024,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_13 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1063,7 +1090,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_14 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          REG = as_factor(REG),
@@ -1076,12 +1103,14 @@ Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_14 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1145,7 +1174,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_1 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_1 = as_factor(Q31_1),
@@ -1158,12 +1187,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_1 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1222,7 +1253,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_2 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_2 = as_factor(Q31_2),
@@ -1235,12 +1266,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_2 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1301,7 +1334,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_3 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_3 = as_factor(Q31_3),
@@ -1314,12 +1347,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_3 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1378,7 +1413,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_4 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_4 = as_factor(Q31_4),
@@ -1391,12 +1426,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_4 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1454,7 +1491,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_5 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_5 = as_factor(Q31_5),
@@ -1467,12 +1504,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_5 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1532,7 +1571,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_6 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_6 = as_factor(Q31_6),
@@ -1545,12 +1584,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_6 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1611,7 +1652,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_7 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90)%>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_7 = as_factor(Q31_7),
@@ -1624,12 +1665,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_7 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1689,7 +1732,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_8 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_8 = as_factor(Q31_8),
@@ -1702,12 +1745,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_8 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1767,7 +1812,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_9 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_9 = as_factor(Q31_9),
@@ -1780,12 +1825,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_9 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1847,7 +1894,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_10 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_10 = as_factor(Q31_10),
@@ -1860,12 +1907,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_10 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -1923,7 +1972,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_11 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_11 = as_factor(Q31_11),
@@ -1936,12 +1985,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_11 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -2001,7 +2052,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_12 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_12 = as_factor(Q31_12),
@@ -2014,12 +2065,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_12 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -2077,7 +2130,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_13 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_13 = as_factor(Q31_13),
@@ -2090,12 +2143,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_13 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -2154,7 +2209,7 @@ Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, RE
 # Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
 
 Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_14 <3,
-                          D09_RENDAF < 200000, D03 < 11, D12a < 90, Q10P2b < 40) %>%
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
   mutate(D10 = as_factor(D10),
          D12A = as_factor(D12a),
          Q31_14 = as_factor(Q31_14),
@@ -2167,12 +2222,14 @@ Eseb1 <- Eseb1 %>% filter(Q02f < 90,  D03 < 90, Q31_14 <3,
 
 
 Eseb1 <- Eseb1 %>%
-  mutate(Q10P2b = case_when(#Q10P2b == "Anulou o Voto" ~ "Branco/Nulo",
-    #Q10P2b == "Votou em branco" ~ "Branco/Nulo",
-    #Q10P2b == "Não Sabe/Não lembra" ~ "Não sabe/Não respondeu",
-    #Q10P2b == "Não respondeu" ~ "Não sabe/Não respondeu",
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
     Q10P2b == "Lula" ~ "Lula",
     Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
   ))
 
 
@@ -2218,5 +2275,6 @@ ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
        color = "Voto",
        linetype = "Voto") +
   theme_minimal()
+
 
 
