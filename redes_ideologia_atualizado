@@ -1,0 +1,1334 @@
+install.packages("stargazer")
+install.packages("haven")
+install.packages("ggthemes")
+install.packages("lmtest")
+install.packages("margins")
+install.packages("tidyverse")
+install.packages("sjPlot")
+install.packages("margins")
+install.packages("broom")
+install.packages("kableExtra")
+
+
+library(tidyverse)
+library(readr)
+library(sjPlot)
+library(haven)
+library(lmtest)
+library(sandwich)
+library(car)
+library(stargazer)
+library(ggthemes)
+library(margins)
+library(dotwhisker)
+library(broom)
+library(kableExtra)
+
+# Tratamento dos dados do ESEB de 2022
+
+ESEB2022 <- read_sav("https://github.com/ulissesgdm/Analise-de-dados/raw/master/Eseb_2022%20(2).sav")
+
+
+########################################################################################
+
+
+#Regressões e gráficos sobre o consumo de mídias e a renda
+
+#Maioridade e TV
+
+###################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90,  D03 < 90, Q31_1 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         Q31_1 = as_factor(Q31_1),
+         REG = as_factor(REG),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_maioridade <- glm(Q31_1 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_maioridade)
+
+Eseb1$predicted_prob <- predict(reg_maioridade, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio à red. da maioridade",
+       x = "Dias de Consumo - TV",
+       y = "Probabilidade de Discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio à red. da maioridade",
+       x = "Dias de Consumo - Redes",
+       y = "Probabilidade de Discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_maioridade, show.ci = FALSE, show.se = TRUE)
+
+
+#Casamento Homoafetivo e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_2 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_2 = as_factor(Q31_2),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_casamento <- glm(Q31_2 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_casamento)
+
+Eseb1$predicted_prob <- predict(reg_casamento, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio ao casamento homoafetivo",
+       x = "Dias de Consumo",
+       y = "Tendência a discordar",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes e apoio ao casamento homoafetivo",
+       x = "Dias de Consumo",
+       y = "Tendência a discordar",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_casamento, show.ci = FALSE, show.se = TRUE)
+
+
+#Adoção e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_3 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_3 = as_factor(Q31_3),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_adocao <- glm(Q31_3 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_adocao)
+
+Eseb1$predicted_prob <- predict(reg_adocao, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio ao adoção po casal homoafetivo",
+       x = "Tendência a discordar",
+       y = "Dias de Consumo",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de redes sociais e apoio ao adoção po casal homoafetivo",
+       x = "Tendência a discordar",
+       y = "Dias de Consumo",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+tab_model(reg_adocao, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Pena de morte e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_4 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_4 = as_factor(Q31_4),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_morte <- glm(Q31_4 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_morte)
+
+Eseb1$predicted_prob <- predict(reg_morte, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a pena de morte",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a pena de morte",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_morte, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Drogas e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_5 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_5 = as_factor(Q31_5),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_droga <- glm(Q31_5 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_droga)
+
+Eseb1$predicted_prob <- predict(reg_droga, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a legalização das drogas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a legalização das drogas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_droga, show.ci = FALSE, show.se = TRUE)
+
+
+# Armas e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_6 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_6 = as_factor(Q31_6),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+
+reg_armas <- glm(Q31_6 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_armas)
+
+Eseb1$predicted_prob <- predict(reg_armas, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a proibição do porte de armas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a proibição do porte de armas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+tab_model(reg_armas, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Aborto e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_7 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_7 = as_factor(Q31_7),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+
+##########################################################################################################
+
+
+
+reg_aborto <- glm(Q31_7 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_aborto)
+
+Eseb1$predicted_prob <- predict(reg_aborto, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a legalização do aborto",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a legalização do aborto",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+tab_model(reg_aborto, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Prisão de Mulheres e TV
+
+############################################################################################
+
+#Tratamento
+
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_8 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_8 = as_factor(Q31_8),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+
+reg_mulher <- glm(Q31_8 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_mulher)
+
+Eseb1$predicted_prob <- predict(reg_mulher, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a prisão de mulher que realizou aborto",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a prisão de mulher que realizou aborto",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_mulher, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Cotas Raciais e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_9 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_9 = as_factor(Q31_9),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_cotas <- glm(Q31_9 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_cotas)
+
+Eseb1$predicted_prob <- predict(reg_cotas, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a cotas raciais",
+       x = "Dias de consumo - TV",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a cotas raciais",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+
+tab_model(reg_cotas, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Ensino Religioso e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_10 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_10 = as_factor(Q31_10),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+
+reg_religiao <- glm(Q31_10 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_religiao)
+
+Eseb1$predicted_prob <- predict(reg_religiao, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a ensino religioso em escolas públicas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a ensino religioso em escolas públicas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_religiao, show.ci = FALSE, show.se = TRUE)
+
+
+
+# Privatização e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_11 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_11 = as_factor(Q31_11),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_privatiza <- glm(Q31_11 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_privatiza)
+
+Eseb1$predicted_prob <- predict(reg_privatiza, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio a privatizações",
+       x = "Dias de consumo - TV",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio a privatizações",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+
+tab_model(reg_privatiza, show.ci = FALSE, show.se = TRUE)
+
+
+
+
+# Bolsa Família e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_12 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_12 = as_factor(Q31_12),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_bolsa <- glm(Q31_12 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_bolsa)
+
+Eseb1$predicted_prob <- predict(reg_bolsa, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio ao Bolsa Família",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio ao Bolsa Família",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_bolsa, show.ci = FALSE, show.se = TRUE)
+
+
+# Auxílio Brasil e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_13 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_13 = as_factor(Q31_13),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_aux <- glm(Q31_13 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_aux)
+
+Eseb1$predicted_prob <- predict(reg_aux, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio ao Auxílio Brasil",
+       x = "Dias de consumo - TV",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais e apoio ao Auxílio Brasil",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_aux, show.ci = FALSE, show.se = TRUE)
+
+# Militarização e TV
+
+############################################################################################
+
+#Tratamento
+
+Eseb1 <- select(ESEB2022, SbjNum, D01A_IDADE, Q01, Q03, Q02b, Q02f, D02, D03, REG, Q02a, Q02g, Q07d, Q07j, Q07e, Q07f, Q10P1b, Q10P2b, D10, D09_RENDAF, D12a, Q19, Q29, Q31_1, Q31_2, Q31_3, Q31_4, Q31_5, Q31_6, Q31_7, Q31_8, Q31_9, Q31_10, Q31_11, Q31_12, Q31_13, Q31_14)
+
+
+# Filtragem de entrevistados que não responderam as variáveis utilizadas na pesquisa
+
+Eseb1 <- Eseb1 %>% filter(Q02b < 90, Q02f < 90, D03 < 90, Q31_14 <3,
+                          D09_RENDAF < 200000, D03 < 11, D12a < 90) %>%
+  mutate(D10 = as_factor(D10),
+         D12A = as_factor(D12a),
+         REG = as_factor(REG),
+         Q31_14 = as_factor(Q31_14),
+         Q10P2b = as_factor(Q10P2b),
+         D02 = as_factor(D02),
+         Q01 = as_factor(Q01))
+
+#Variável Voto
+
+
+Eseb1 <- Eseb1 %>%
+  mutate(Q10P2b = case_when(
+    Q10P2b == "Anulou o voto" ~ "Não respondeu/Não votou",
+    Q10P2b == "Votou em branco" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não sabe/ Não lembra" ~ "Não respondeu/Não votou",
+    Q10P2b == "Não respondeu" ~ "Não respondeu/Não votou",
+    Q10P2b == "Lula" ~ "Lula",
+    Q10P2b == "Jair Bolsonaro" ~ "Jair Bolsonaro",
+    is.na(Q10P2b) ~ "Não respondeu/Não votou"
+  ))
+
+
+#Variável religião
+
+Outras <- levels(Eseb1$D10)[-c(3,5,96,97,98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(religiao = case_when(D10 %in% Outras ~ "Outras",
+                              D10 == "Católica" ~ "Católica",
+                              D10 == "Evangélica" ~ "Evangélica",
+                              D10 == "Não tem religião" ~ "Não tem religião",
+                              D10 == "É ATEU/AGNÓSTICO/ NÃO ACREDITA EM DEUS " ~ "Não tem religião"))
+
+
+#Variável Raça
+
+Outros <- levels(Eseb1$D12A)[c(4,5, 97, 98)]
+
+Eseb1 <- Eseb1 %>%
+  mutate(raca = case_when(D12A %in% Outros ~ "Outros",
+                          D12A == "Preto" ~ "Preto",
+                          D12A == "Pardo" ~ "Pardo",
+                          D12A == "Branco" ~ "Branco"))
+
+##########################################################################################################
+
+reg_milico <- glm(Q31_14 ~ Q02b*Q10P2b + Q02f*Q10P2b + Q01 + D09_RENDAF + D01A_IDADE + D02 + D03 + religiao + raca, data = Eseb1, family = binomial)
+
+summary(reg_milico)
+
+Eseb1$predicted_prob <- predict(reg_milico, type = "response")
+
+
+ggplot(Eseb1, aes(x = Q02b, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de TV e apoio ao  Militarização das escolas",
+       x = "Dias de consumo - TV",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+ggplot(Eseb1, aes(x = Q02f, y = predicted_prob, color = Q10P2b)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, aes(linetype = Q10P2b)) +
+  labs(title = "Consumo de Redes Sociais apoio ao  Militarização das escolas",
+       x = "Dias de consumo",
+       y = "Tendência a discordância",
+       color = "Voto",
+       linetype = "Voto") +
+  theme_minimal()
+
+
+tab_model(reg_milico, show.ci = FALSE, show.se = TRUE)
